@@ -110,6 +110,7 @@ echo "enable_instance_password=False" >> $NOVA_CONF
 echo "service_neutron_metadata_proxy=True" >> $NOVA_CONF
 echo "neutron_metadata_proxy_shared_secret=$METADATA_SECRET" >> $NOVA_CONF
 echo "rpc_backend = rabbit" >> $NOVA_CONF
+echo "live_migration_flag = VIR_MIGRATE_UNDEFINE_SOURCE,VIR_MIGRATE_PEER2PEER,VIR_MIGRATE_LIVE,VIR_MIGRATE_PERSIST_DEST,VIR_MIGRATE_TUNNELLED" >> $NOVA_CONF
 
 echo "" >> $NOVA_CONF
 echo "[keystone_authtoken]" >> $NOVA_CONF
@@ -155,11 +156,45 @@ echo "project_name = service" >> $NOVA_CONF
 echo "username = neutron" >> $NOVA_CONF
 echo "password = $NEUTRON_PASS" >> $NOVA_CONF
 
+if [ "$STORE_BACKEND" == "ceph" ]; then
+  echo "" >> $NOVA_CONF
+  echo "[libvirt]" >> $NOVA_CONF
+  echo "images_type = rbd" >> $NOVA_CONF
+  echo "images_rbd_pool = vms" >> $NOVA_CONF
+  echo "images_rbd_ceph_conf = /etc/ceph/ceph.conf" >> $NOVA_CONF
+  echo "rbd_user = cinder" >> $NOVA_CONF
+  echo "rbd_secret_uuid = $UUID" >> $NOVA_CONF
+  echo "inject_password = false" >> $NOVA_CONF
+  echo "inject_key = false" >> $NOVA_CONF
+  echo "inject_partition = -2" >> $NOVA_CONF
+  echo "hw_disk_discard = unmap" >> $NOVA_CONF
+fi
+
 # Select kvm/qemu
 cpus=`egrep -c '(vmx|svm)' /proc/cpuinfo`
 if [ $cpus -eq 0 ]; then
     sed -i "s/virt_type.*/virt_type=qemu/" $NOVA_COMPUTE
 fi
 
+if [ "$STORE_BACKEND" == "ceph" ]; then
+  cat > secret.xml <<EOF
+<secret ephemeral='no' private='no'>
+  <uuid>$UUID</uuid>
+  <usage type='ceph'>
+    <name>client.cinder secret</name>
+  </usage>
+</secret>
+EOF
+  virsh secret-define --file secret.xml
+  virsh secret-set-value --secret $UUID --base64 $(grep key /etc/ceph/ceph.client.cinder.keyring | awk '{printf "%s", $NF}') && rm secret.xml
+fi
+
 service libvirt-bin restart
 service nova-compute restart
+
+## Setup complete
+echo 'Setup complete!...'
+
+while true
+  do sleep 1
+done
