@@ -22,7 +22,7 @@ sed -i "\
   s/# l2_population.*/l2_population = True/; \
   s/^\[agent\]/[agent]\n\nprevent_arp_spoofing = True/; \
   s/# enable_security_group.*/enable_security_group = True/; \
-  s/# firewall_driver.*/neutron.agent.linux.iptables_firewall.IptablesFirewallDriver/; \
+  s/# firewall_driver.*/firewall_driver = neutron.agent.linux.iptables_firewall.IptablesFirewallDriver/; \
 " /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
 NOVA_CONF=/etc/nova/nova.conf
