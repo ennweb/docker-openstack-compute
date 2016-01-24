@@ -61,7 +61,7 @@ echo "rabbit_password = $RABBIT_PASS" >> $NOVA_CONF
 echo "" >> $NOVA_CONF
 echo "[vnc]" >> $NOVA_CONF
 echo "enabled = True" >> $NOVA_CONF
-echo "vncserver_listen = 0.0.0.0" >> $NOVA_CONF
+echo "vncserver_listen = $LISTEN_IP" >> $NOVA_CONF
 echo "vncserver_proxyclient_address = $LISTEN_IP" >> $NOVA_CONF
 echo "novncproxy_base_url = http://$CONTROLLER_HOST:6080/vnc_auto.html" >> $NOVA_CONF
 
