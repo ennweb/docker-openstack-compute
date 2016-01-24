@@ -4,7 +4,7 @@ MAINTAINER EnnWeb Cloud <cloud@ennweb.com>
 
 ENV \
   DEBIAN_FRONTEND=noninteractive \
-  STORE_BACKEND=ceph \
+  STORE_BACKEND=file \
   RABBIT_USER=openstack \
   RABBIT_PASS=rabbitpass \
   CONTROLLER_HOST=controller \
@@ -26,6 +26,8 @@ RUN \
   apt-get autoclean && \
   apt-get autoremove && \
   rm -rf /var/lib/apt/lists/*
+
+VOLUME ["/var/lib/nova/instances"]
 
 ADD entrypoint.sh /
 
