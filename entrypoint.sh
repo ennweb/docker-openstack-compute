@@ -105,22 +105,22 @@ if [ $cpus -eq 0 ]; then
     sed -i "s/virt_type.*/virt_type=qemu/" $NOVA_COMPUTE
 fi
 
+service libvirt-bin restart
+service nova-compute restart
+service neutron-plugin-linuxbridge-agent restart
+
 if [ "$STORE_BACKEND" == "ceph" ]; then
   cat > secret.xml <<EOF
-<secret ephemeral='no' private='no'>
+  <secret ephemeral='no' private='no'>
   <uuid>$UUID</uuid>
   <usage type='ceph'>
-    <name>client.cinder secret</name>
+  <name>client.cinder secret</name>
   </usage>
-</secret>
+  </secret>
 EOF
   virsh secret-define --file secret.xml
   virsh secret-set-value --secret $UUID --base64 $(grep key /etc/ceph/ceph.client.cinder.keyring | awk '{printf "%s", $NF}') && rm secret.xml
 fi
-
-service libvirt-bin restart
-service nova-compute restart
-service neutron-plugin-linuxbridge-agent restart
 
 ## Setup complete
 echo 'Setup complete!...'
