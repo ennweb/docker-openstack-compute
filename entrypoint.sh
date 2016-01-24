@@ -122,6 +122,9 @@ EOF
   virsh secret-set-value --secret $UUID --base64 $(grep key /etc/ceph/ceph.client.cinder.keyring | awk '{printf "%s", $NF}') && rm secret.xml
 fi
 
+# Disable libvirt network
+virsh net-destroy default
+
 ## Setup complete
 echo 'Setup complete!...'
 
