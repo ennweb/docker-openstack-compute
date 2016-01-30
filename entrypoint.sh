@@ -2,29 +2,6 @@
 
 echo 'Starting compute service...'
 
-sed -i "\
-  s/^# rpc_backend=rabbit.*/rpc_backend=rabbit/; \
-  s/^# rabbit_host = localhost.*/rabbit_host=$CONTROLLER_HOST/; \
-  s/^# rabbit_userid = guest.*/rabbit_userid = $RABBIT_USER/; \
-  s/^# rabbit_password = guest.*/rabbit_password = $RABBIT_PASS/; \
-  s/^# auth_strategy = keystone.*/auth_strategy = keystone/; \
-  s/^auth_uri =.*/auth_uri = http:\/\/$CONTROLLER_HOST:5000/; \
-  s/^identity_uri =.*/auth_url = http:\/\/$CONTROLLER_HOST:35357/; \
-  s/^admin_tenant_name =.*/auth_plugin = password\nproject_domain_id = default\nuser_domain_id = default\nproject_name = service/; \
-  s/^admin_user =.*/username = neutron/; \
-  s/^admin_password =.*/password = $NEUTRON_PASS/; \
-" /etc/neutron/neutron.conf
-
-sed -i "\
-  s/# physical_interface_mappings.*/physical_interface_mappings = public:$INTERFACE_NAME/; \
-  s/# enable_vxlan.*/enable_vxlan = True/; \
-  s/# local_ip.*/local_ip = $LOCAL_IP/; \
-  s/# l2_population.*/l2_population = True/; \
-  s/^\[agent\]/[agent]\n\nprevent_arp_spoofing = True/; \
-  s/# enable_security_group.*/enable_security_group = True/; \
-  s/# firewall_driver.*/firewall_driver = neutron.agent.linux.iptables_firewall.IptablesFirewallDriver/; \
-" /etc/neutron/plugins/ml2/linuxbridge_agent.ini
-
 NOVA_CONF=/etc/nova/nova.conf
 NOVA_COMPUTE=/etc/nova/nova-compute.conf
 
@@ -32,7 +9,7 @@ echo "my_ip = $LISTEN_IP" >> $NOVA_CONF
 echo "auth_strategy = keystone" >> $NOVA_CONF
 echo "network_api_class = nova.network.neutronv2.api.API" >> $NOVA_CONF
 echo "security_group_api = neutron" >> $NOVA_CONF
-echo "linuxnet_interface_driver = nova.network.linux_net.NeutronLinuxBridgeInterfaceDriver" >> $NOVA_CONF
+echo "linuxnet_interface_driver = nova.network.linux_net.LinuxOVSInterfaceDriver" >> $NOVA_CONF
 echo "firewall_driver = nova.virt.firewall.NoopFirewallDriver" >> $NOVA_CONF
 echo "fixed_ip_disassociate_timeout=30" >> $NOVA_CONF
 echo "enable_instance_password=False" >> $NOVA_CONF
@@ -107,7 +84,6 @@ fi
 
 service libvirt-bin restart
 service nova-compute restart
-service neutron-plugin-linuxbridge-agent restart
 
 if [ "$STORE_BACKEND" == "ceph" ]; then
   cat > secret.xml <<EOF
